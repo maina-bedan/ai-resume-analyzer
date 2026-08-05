@@ -1,21 +1,37 @@
-import {usePuterStore} from "~/lib/puter";
-import {useEffect} from "react";
-import {useLocation, useNavigate} from "react-router";
+import { usePuterStore } from "~/lib/puter";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router";
 
-export const meta =()=>([
-    {title: 'Resumind | Auth'},
-    {name: 'description', content: 'log into your account'},
-])
+export const meta = () => ([
+    { title: 'Resumind | Auth' },
+    { name: 'description', content: 'log into your account' },
+]);
 
-const Auth:() => React.JSX.Element =()=>{
+const Auth: () => React.JSX.Element = () => {
     const { isLoading, auth } = usePuterStore();
     const location = useLocation();
-    const next = location.search.split("next=")[1];
     const navigate = useNavigate();
 
-    useEffect(()=>{
-        if(auth.isAuthenticated) navigate(next);
-    }, [auth.isAuthenticated, next])
+    // Safely extract `next` target or default to home page `/`
+    const searchParams = new URLSearchParams(location.search);
+    const next = searchParams.get("next") || "/";
+
+    // Auto-redirect if user visits /auth while ALREADY signed in
+    useEffect(() => {
+        if (auth.isAuthenticated) {
+            navigate(next);
+        }
+    }, [auth.isAuthenticated, next, navigate]);
+
+    // Handle sign-in click and redirect immediately upon success
+    const handleSignIn = async () => {
+        try {
+            await auth.signIn();
+            navigate(next); // <--- THIS redirects to the home page after login!
+        } catch (error) {
+            console.error("Sign-in failed:", error);
+        }
+    };
 
     return (
         <main className="bg-[url('/images/bg-auth.svg')] bg-cover min-h-screen flex items-center justify-center">
@@ -36,8 +52,8 @@ const Auth:() => React.JSX.Element =()=>{
                                     <button className="auth-button" onClick={auth.signOut}>
                                         <p>log out</p>
                                     </button>
-                                ):(
-                                    <button className="auth-button" onClick={auth.signIn}>
+                                ) : (
+                                    <button className="auth-button" onClick={handleSignIn}>
                                         <p>log in</p>
                                     </button>
                                 )}
@@ -46,8 +62,8 @@ const Auth:() => React.JSX.Element =()=>{
                     </div>
                 </section>
             </div>
-
         </main>
-    )
-}
-export default Auth
+    );
+};
+
+export default Auth;

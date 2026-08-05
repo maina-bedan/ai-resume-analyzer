@@ -253,7 +253,7 @@ export const usePuterStore = create<PuterStore>((set, get) => {
             if (getPuter()) {
                 clearInterval(interval);
                 set({ puterReady: true });
-                checkAuthStatus()
+                checkAuthStatus();
             }
         }, 100);
 
