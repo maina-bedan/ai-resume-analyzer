@@ -96,6 +96,7 @@ interface PuterStore {
     clearError: () => void;
 }
 
+
 const getPuter = (): typeof window.puter | null =>
     typeof window !== "undefined" && window.puter ? window.puter : null;
 
@@ -322,9 +323,12 @@ export const usePuterStore = create<PuterStore>((set, get) => {
             return;
         }
         // return puter.ai.chat(prompt, imageURL, testMode, options);
-        return puter.ai.chat(prompt, imageURL, testMode, options) as Promise<
-            AIResponse | undefined
-        >;
+        return (await puter.ai.chat(
+            prompt,
+            imageURL,
+            testMode,
+            options
+        )) as AIResponse | undefined;
     };
 
     const feedback = async (path: string, message: string) => {
@@ -454,3 +458,11 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         clearError: () => set({ error: null }),
     };
 });
+
+export const ai = {
+    feedback: async (imagePath: string, instructions: string) => {
+        // If window.puter is declared:
+        const p = (window as any).puter;
+        return await p.ai.chat(instructions, imagePath);
+    },
+};
