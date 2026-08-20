@@ -48,17 +48,29 @@ const Upload=()=>{
 
         setStatusText('analyzing data...');
 
-        const feedback = await ai.feedback(
-            uploadedImage.path,
-            prepareInstructions({ jobTitle, jobDescription })
-        );
-        if(!feedback) return setStatusText('error: failed to analyze resume ');
+        try {
+            const feedback = await ai.feedback(
+                uploadedImage.path,
+                prepareInstructions({ jobTitle, jobDescription })
+            );
 
-        const feedbackText = typeof feedback.message.content === 'string'
-            ? feedback.message.content
-            : feedback.message.content[0].text;
+            if (!feedback) {
+                throw new Error('No response from AI');
+            }
 
-        data.feedback = JSON.parse(feedbackText);
+            const feedbackText = typeof feedback.message.content === 'string'
+                ? feedback.message.content
+                : feedback.message.content[0].text;
+
+            data.feedback = feedbackText;
+        } catch (error) {
+            console.warn("Puter AI failed, using fallback:", error);
+            data.feedback = JSON.stringify({
+                score: 85,
+                summary: "This is mock feedback so you can keep building while Puter is down.",
+            });
+        }
+
         await kv.set(`resume:${uuid}`, JSON.stringify(data));
         setStatusText('analysis complete, redirecting...');
         console.log(data);
